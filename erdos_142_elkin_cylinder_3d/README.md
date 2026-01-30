@@ -18,15 +18,15 @@ This repo provides:
 
 Repository Structure
 
-erdos_142_elkin_cylinder_construction/
-│
-├── erdos_142_elkin_cylinder_construction.md    Detailed documentation
-├── elkin_3d_viewer.html                        HTML interactive 3D viewer
-├── elkin_3d_viewer.ipynb                       Python notebook interactive 3D viewer
-├── elkin_example_N1000.json                     Precomputed example for N=1,000
-├── elkin_example_N100000.json                   Precomputed example for N=100,000
-├── requirements.txt                             Python dependencies
-└── README.md                                    This file
+erdos-problem-142/
+└── erdos_142_elkin_cylinder_3d/
+    ├── erdos_142_elkin_cylinder_construction.md    Detailed documentation
+    ├── elkin_3d_viewer.html                        HTML interactive 3D viewer
+    ├── elkin_3d_viewer.ipynb                       Python notebook interactive 3D viewer
+    ├── elkin_example_N1000.json                     Precomputed example for N=1,000
+    ├── elkin_example_N100000.json                   Precomputed example for N=100,000
+    ├── requirements.txt                             Python dependencies
+    └── README.md                                    This file
 
 Features
 
@@ -58,6 +58,7 @@ numpy>=1.25
 matplotlib>=3.8
 plotly>=5.16
 ipywidgets>=8.1
+notebook>=7.0
 
 HTML Version (elkin_3d_viewer.html)
 
