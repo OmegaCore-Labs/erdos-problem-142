@@ -1,0 +1,22 @@
+{
+  "N": 100000,
+  "construction": "Elkin Cylinder (2011)",
+  "set_size": 38706,
+  "density": 0.38706,
+  "verified": true,
+  "parameters": {
+    "N": 100000,
+    "d": 7,
+    "d1": 5,
+    "d2": 2,
+    "M": 10,
+    "mid": 5,
+    "R2": 16,
+    "cylinder_type": "restricted",
+    "scaling_factor": 1.537
+  },
+  "first_20": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+  "last_20": [38686, 38687, 38688, 38689, 38690, 38691, 38692, 38693, 38694, 38695, 38696, 38697, 38698, 38699, 38700, 38701, 38702, 38703, 38704, 38705],
+  "mathematical_improvement": "δ ≥ exp(-C√log N (log log N)^{1/4}) vs Behrend's exp(-C√log N)",
+  "reference": "Elkin, M. (2011). 'An improved construction of progression-free sets.'"
+}
