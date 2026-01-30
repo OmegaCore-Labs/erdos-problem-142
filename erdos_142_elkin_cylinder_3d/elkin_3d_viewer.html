@@ -1,0 +1,91 @@
+
+### HTML Version (`elkin_3d_viewer.html`)
+
+* Works in any modern browser (Chrome, Firefox, Edge).
+* No Python installation required.
+* Provides fully interactive 3D visualization for small-to-medium sets (full enumeration up to ~50k points recommended).
+* Large sets use GPU-friendly **sampling**, showing only a subset of points to prevent freezing.
+
+---
+
+## Usage Notes
+
+### Python Notebook
+
+1. Open `elkin_3d_viewer.ipynb` in **Jupyter Notebook** or **JupyterLab**.
+2. Run all cells sequentially.
+3. Adjust interactive sliders:
+
+   * `N`: total number of points in the set.
+   * `d1`, `d2`: sphere and free cylinder dimensions.
+   * `Sample Ratio`: fraction of points plotted (1.0 = full set; browser-safe ≤0.1–0.2 for large N).
+4. The notebook computes the full dataset in memory; sampling only affects plotting for large N.
+5. Hover over points for details; change color palettes to visualize layers.
+6. Export computed sets to JSON using provided cells.
+
+**Notes on full enumeration vs sampling:**
+
+* **Small sets** (`N ≤ 50k`): fully enumerated and plotted.
+* **Medium sets** (`50k < N ≤ 1M`): sampling active for plotting; dataset still fully stored in memory.
+* **Large sets** (`N > 1M`): use sampling to keep browser responsive. Full analysis still possible offline.
+
+---
+
+### HTML Viewer
+
+1. Open `elkin_3d_viewer.html` in a browser.
+2. Load example JSONs (`elkin_example_N1000.json`, `elkin_example_N100000.json`) via interface.
+3. Rotate, zoom, and inspect points interactively.
+4. Use color palette and optional animation controls to enhance visualization.
+5. Full enumeration is feasible for `N ≤ 50k`. Larger sets will automatically display a sampled subset.
+
+---
+
+### Precomputed JSON Examples
+
+* `elkin_example_N1000.json`: small demo set, fully enumerated.
+* `elkin_example_N100000.json`: larger set with GPU-friendly plotting sampling.
+
+These JSONs include:
+
+* `N`: total number of integers.
+* `set_size`: number of 3-AP-free elements.
+* `density`: fraction of `N`.
+* `parameters`: construction parameters (`d`, `d1`, `d2`, `M`, `mid`, `R2`, etc.).
+* `first_20`, `last_20`: sample elements.
+* `mathematical_improvement`: improvement over Behrend.
+* `reference`: original paper citation.
+
+---
+
+## Documentation
+
+* `erdos_142_elkin_cylinder_construction.md` provides **mathematical explanation** of Elkin's construction, pseudocode, and execution outputs.
+* Useful for research reproducibility, reference, and linking to publications.
+
+---
+
+## Differences Between HTML and Python Versions
+
+| Feature                      | Python Notebook              | HTML Viewer                       |
+| ---------------------------- | ---------------------------- | --------------------------------- |
+| Computation of arbitrary `N` | ✅ Full computation possible  | ❌ Precomputed JSON or small N     |
+| Full enumeration             | ✅ Up to memory limits        | ✅ Up to ~50k points               |
+| GPU-friendly sampling        | ✅ Optional for large N       | ✅ Automatic for large N           |
+| Interactivity                | ✅ Sliders, hover info, color | ✅ Rotate, zoom, color, animation  |
+| Export results               | ✅ JSON export                | ❌ JSON export only by saving file |
+| Requirement                  | Python + libraries           | Browser only                      |
+
+---
+
+## References
+
+* **Elkin, M. (2011)**. "An improved construction of progression-free sets." *Israel Journal of Mathematics*.
+* **Behrend, F. A. (1946)**. "On sets of integers which contain no three terms in arithmetic progression." *Proceedings of the National Academy of Sciences*.
+
+---
+
+## License
+
+This repository is released under the **MIT License**.
+You are free to use, modify, and distribute the code and datasets with proper attribution.
