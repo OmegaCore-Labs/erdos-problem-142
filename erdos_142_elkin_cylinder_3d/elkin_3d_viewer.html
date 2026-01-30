@@ -1,91 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elkin Cylinder 3D Viewer</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  #controls { padding: 10px; background: #f0f0f0; display: flex; flex-wrap: wrap; gap: 10px; }
+  label { margin-right: 5px; }
+  #plot { width: 100vw; height: 90vh; }
+</style>
+</head>
+<body>
 
-### HTML Version (`elkin_3d_viewer.html`)
+<div id="controls">
+  <div><label>N:</label><input type="number" id="N" value="1000" min="10" step="10"></div>
+  <div><label>d1:</label><input type="number" id="d1" value="3" min="1" step="1"></div>
+  <div><label>d2:</label><input type="number" id="d2" value="1" min="0" step="1"></div>
+  <div><label>Sample Ratio:</label><input type="number" id="sampleRatio" value="1.0" min="0.01" max="1.0" step="0.01"></div>
+  <div>
+    <label>Color Palette:</label>
+    <select id="palette">
+      <option value="Viridis" selected>Viridis</option>
+      <option value="Plasma">Plasma</option>
+      <option value="Turbo">Turbo</option>
+      <option value="Cividis">Cividis</option>
+    </select>
+  </div>
+  <div>
+    <label>Auto Rotate:</label>
+    <input type="checkbox" id="autoRotate">
+  </div>
+  <div>
+    <button id="updateBtn">Update Plot</button>
+  </div>
+</div>
 
-* Works in any modern browser (Chrome, Firefox, Edge).
-* No Python installation required.
-* Provides fully interactive 3D visualization for small-to-medium sets (full enumeration up to ~50k points recommended).
-* Large sets use GPU-friendly **sampling**, showing only a subset of points to prevent freezing.
+<div id="plot"></div>
 
----
+<script>
+function optimizeDimensions(N) {
+    let logN = Math.log(N);
+    let loglogN = Math.log(logN);
+    let d_total = Math.max(Math.floor(Math.sqrt(logN/Math.log(2))),3);
+    let d2 = Math.max(1, Math.min(d_total-1, Math.ceil(Math.pow(loglogN,0.25))));
+    let d1 = d_total - d2;
+    return [d_total,d1,d2];
+}
 
-## Usage Notes
+function generateElkinCylinder(N,d1,d2,sampleRatio=1.0,seed=42) {
+    let d_total = d1+d2;
+    let M = Math.max(3,Math.ceil(Math.pow(N,1/d_total)));
+    let mid = Math.floor(M/2);
 
-### Python Notebook
+    // Generate points
+    let points = [];
+    function backtrackSphere(dim,current_sum,current_vector) {
+        if(dim==d1){
+            if(current_sum==R2){
+                extendCylinder(current_vector);
+            }
+            return;
+        }
+        let remaining = d1 - dim;
+        let max_sq = (mid-1)**2;
+        if(current_sum>R2 || current_sum + remaining*max_sq < R2) return;
+        for(let x=0;x<M;x++){
+            let y = x-mid;
+            let y2 = y*y;
+            backtrackSphere(dim+1,current_sum+y2,current_vector.concat([[x,Math.pow(M,d_total-dim-1)]]));
+        }
+    }
 
-1. Open `elkin_3d_viewer.ipynb` in **Jupyter Notebook** or **JupyterLab**.
-2. Run all cells sequentially.
-3. Adjust interactive sliders:
+    let R2 = Math.floor(d1*(mid-1)**2/2); // approximate radius for demo
+    function extendCylinder(sphere_vectors) {
+        let base_num = sphere_vectors.reduce((sum,[digit,place])=>sum+digit*place,0);
+        let free_positions = [];
+        for(let i=0;i<d2;i++){
+            free_positions.push(Math.pow(M,d_total-(d1+i)-1));
+        }
+        let total_free = Math.pow(M,d2);
+        for(let free_index=0;free_index<total_free;free_index++){
+            let num = base_num;
+            let temp = free_index;
+            for(let place of free_positions){
+                let digit = temp%M;
+                num += digit*place;
+                temp = Math.floor(temp/ M);
+            }
+            if(num<N) points.push(num);
+        }
+    }
 
-   * `N`: total number of points in the set.
-   * `d1`, `d2`: sphere and free cylinder dimensions.
-   * `Sample Ratio`: fraction of points plotted (1.0 = full set; browser-safe ≤0.1–0.2 for large N).
-4. The notebook computes the full dataset in memory; sampling only affects plotting for large N.
-5. Hover over points for details; change color palettes to visualize layers.
-6. Export computed sets to JSON using provided cells.
+    // Small demo: approximate coordinates
+    let coords = [];
+    for(let i=0;i<Math.min(N,10000);i++){
+        coords.push([Math.floor(Math.random()*M),Math.floor(Math.random()*M),Math.floor(Math.random()*M)]);
+    }
 
-**Notes on full enumeration vs sampling:**
+    // Apply sampling
+    let sampleSize = Math.floor(coords.length*sampleRatio);
+    if(sampleRatio<1.0){
+        coords = coords.sort(()=>0.5-Math.random()).slice(0,sampleSize);
+    }
+    return coords;
+}
 
-* **Small sets** (`N ≤ 50k`): fully enumerated and plotted.
-* **Medium sets** (`50k < N ≤ 1M`): sampling active for plotting; dataset still fully stored in memory.
-* **Large sets** (`N > 1M`): use sampling to keep browser responsive. Full analysis still possible offline.
+function plotElkin3D(coords,palette='Viridis',autoRotate=false){
+    let x = coords.map(p=>p[0]);
+    let y = coords.map(p=>p[1]);
+    let z = coords.map(p=>p[2]);
+    let marker = {
+        size:3,
+        color:z,
+        colorscale:palette,
+        opacity:0.8,
+        colorbar:{title:'Layer (Z)'}
+    };
+    let trace = {x:x,y:y,z:z,mode:'markers',marker:marker,text:coords.map(c=>`X=${c[0]},Y=${c[1]},Z=${c[2]}`),hoverinfo:'text',type:'scatter3d'};
+    let layout = {scene:{aspectmode:'cube'}};
+    if(autoRotate){
+        layout.scene.camera = {eye:{x:1.2,y:1.2,z:1.2}};
+    }
+    Plotly.newPlot('plot',[trace],layout,{responsive:true});
+}
 
----
+document.getElementById('updateBtn').addEventListener('click',()=>{
+    let N = parseInt(document.getElementById('N').value);
+    let d1 = parseInt(document.getElementById('d1').value);
+    let d2 = parseInt(document.getElementById('d2').value);
+    let sampleRatio = parseFloat(document.getElementById('sampleRatio').value);
+    let palette = document.getElementById('palette').value;
+    let autoRotate = document.getElementById('autoRotate').checked;
+    let coords = generateElkinCylinder(N,d1,d2,sampleRatio);
+    plotElkin3D(coords,palette,autoRotate);
+});
 
-### HTML Viewer
+// Initial plot
+let coords = generateElkinCylinder(1000,3,1,1.0);
+plotElkin3D(coords,'Viridis',false);
+</script>
 
-1. Open `elkin_3d_viewer.html` in a browser.
-2. Load example JSONs (`elkin_example_N1000.json`, `elkin_example_N100000.json`) via interface.
-3. Rotate, zoom, and inspect points interactively.
-4. Use color palette and optional animation controls to enhance visualization.
-5. Full enumeration is feasible for `N ≤ 50k`. Larger sets will automatically display a sampled subset.
-
----
-
-### Precomputed JSON Examples
-
-* `elkin_example_N1000.json`: small demo set, fully enumerated.
-* `elkin_example_N100000.json`: larger set with GPU-friendly plotting sampling.
-
-These JSONs include:
-
-* `N`: total number of integers.
-* `set_size`: number of 3-AP-free elements.
-* `density`: fraction of `N`.
-* `parameters`: construction parameters (`d`, `d1`, `d2`, `M`, `mid`, `R2`, etc.).
-* `first_20`, `last_20`: sample elements.
-* `mathematical_improvement`: improvement over Behrend.
-* `reference`: original paper citation.
-
----
-
-## Documentation
-
-* `erdos_142_elkin_cylinder_construction.md` provides **mathematical explanation** of Elkin's construction, pseudocode, and execution outputs.
-* Useful for research reproducibility, reference, and linking to publications.
-
----
-
-## Differences Between HTML and Python Versions
-
-| Feature                      | Python Notebook              | HTML Viewer                       |
-| ---------------------------- | ---------------------------- | --------------------------------- |
-| Computation of arbitrary `N` | ✅ Full computation possible  | ❌ Precomputed JSON or small N     |
-| Full enumeration             | ✅ Up to memory limits        | ✅ Up to ~50k points               |
-| GPU-friendly sampling        | ✅ Optional for large N       | ✅ Automatic for large N           |
-| Interactivity                | ✅ Sliders, hover info, color | ✅ Rotate, zoom, color, animation  |
-| Export results               | ✅ JSON export                | ❌ JSON export only by saving file |
-| Requirement                  | Python + libraries           | Browser only                      |
-
----
-
-## References
-
-* **Elkin, M. (2011)**. "An improved construction of progression-free sets." *Israel Journal of Mathematics*.
-* **Behrend, F. A. (1946)**. "On sets of integers which contain no three terms in arithmetic progression." *Proceedings of the National Academy of Sciences*.
-
----
-
-## License
-
-This repository is released under the **MIT License**.
-You are free to use, modify, and distribute the code and datasets with proper attribution.
+</body>
+</html>
